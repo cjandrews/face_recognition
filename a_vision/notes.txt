@@ -1,0 +1,86 @@
+setting up a virtual machine:
+__________________
+
+1. Open powershell
+2. cd to the project directory root
+3. python -m venv frenv
+4. frenv\Scripts\activate
+5. pip install numpy pandas torch pillow face_recognition opencv-python
+
+To deactivate:
+
+deactivate
+
+Troubleshooting; I had to do the following
+________________
+
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+I had to install CMake from the official website
+
+I had to install Build Tools for Visual Studio 2022
+
+-----------------------------------------------------------------------------
+
+Directory scan routine
+__________
+
+import os
+from PIL import Image, ExifTags
+
+def scan_directory(root):
+    images = []
+    for dirpath, _, files in os.walk(root):
+        for f in files:
+            if f.lower().endswith(('.jpg', '.jpeg', '.png')):
+                path = os.path.join(dirpath, f)
+                try:
+                    img = Image.open(path)
+                    exif = img._getexif()
+                    # Extract EXIF info as needed
+                    images.append({'path': path, 'size': img.size, 'exif': exif})
+                except Exception as e:
+                    print(f"Could not open {path}: {e}")
+    return images
+
+Object classification; prints out results
+________________
+
+from ultralytics import YOLO
+import cv2
+
+# For basic YOLOv8
+
+model = YOLO('yolov8n.pt')
+results = model('path/to/image.jpg')
+for result in results:
+    print(result.names, result.boxes)
+
+# For the Objects365 YOLO11
+
+model2 = YOLO('yolo11n_object365.pt')
+results = model2('path/to/image.jpg')
+
+# To access the model classes
+
+for itm in results[0].boxes:
+  print(model2.names[itm.cls[0].item()])
+
+
+
+for face detection and clustering
+________________
+
+import face_recognition
+import numpy as np
+from sklearn.cluster import DBSCAN
+
+def get_face_encodings(image_path):
+    image = face_recognition.load_image_file(image_path)
+    locations = face_recognition.face_locations(image)
+    encodings = face_recognition.face_encodings(image, locations)
+    return encodings, locations
+
+# For clustering, collect all encodings then DBSCAN
+
+
