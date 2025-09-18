@@ -3,8 +3,8 @@ __________________
 
 1. Open powershell
 2. cd to the project directory root
-3. python -m venv frenv
-4. frenv\Scripts\activate
+3. python -m venv <someenvname>
+4. <someenvname>\Scripts\activate
 5. pip install numpy pandas torch pillow face_recognition opencv-python
 
 To deactivate:
@@ -88,6 +88,6 @@ def get_face_encodings(image_path):
 
 Sample CLI call from within the frenv:
 
-python -m a_vision.cli process-dir "F:\Chris Home Computer Backup\Personal\Important Documents\photos\2013-2014 Autodesk photos" --host localhost --user root --password admin --database ai_dev --force-reprocess --model yolo11n_object365.pt --port 3306 --confidence 0.6 --known-faces "C:\data\known_faces"
+python -m a_vision.cli process-dir "F:\Chris Home Computer Backup\Personal\Important Documents\photos\2013-2014 Autodesk photos" --host localhost --user root --password admin --database ai_dev_schema --force-reprocess --model yolo11n_object365.pt --port 3306 --confidence 0.6 --known-faces "C:\data\known_faces"
 
 
