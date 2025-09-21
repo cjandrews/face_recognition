@@ -227,12 +227,7 @@ class PhotoDatabase:
                 # Date/time
                 date_time = exif_data.get('DateTimeOriginal')
                 if date_time:
-                    try:
-                        result['date_time_original'] = datetime.strptime(
-                            date_time, '%Y:%m:%d %H:%M:%S'
-                        ).isoformat()
-                    except ValueError:
-                        result['date_time_original'] = date_time
+                    result['date_time_original'] = self._validate_and_parse_datetime(date_time)
                 
                 # Exposure settings
                 result['exposure_time'] = self._convert_rational(exif_data.get('ExposureTime'))
@@ -609,6 +604,44 @@ class PhotoDatabase:
         ''', names)
         
         return cursor.fetchall()
+    
+    def _validate_and_parse_datetime(self, date_time_str: str) -> str:
+        """Validate and parse EXIF datetime string, returning None for invalid dates."""
+        if not date_time_str or not isinstance(date_time_str, str):
+            return None
+        
+        # Strip whitespace and check for empty or invalid values
+        date_time_str = date_time_str.strip()
+        if not date_time_str or date_time_str in ['0000:00:00 00:00:00', '0000:00:00', '']:
+            logger.debug(f"Invalid EXIF datetime found: '{date_time_str}'")
+            return None
+        
+        # Check for zeroed dates or times
+        if '0000' in date_time_str or ':00:00:00' in date_time_str:
+            parts = date_time_str.split(' ')
+            if len(parts) >= 2:
+                date_part = parts[0]
+                time_part = parts[1]
+                if date_part.startswith('0000') or time_part == '00:00:00':
+                    logger.debug(f"Zeroed EXIF datetime found: '{date_time_str}'")
+                    return None
+        
+        try:
+            parsed_date = datetime.strptime(date_time_str, '%Y:%m:%d %H:%M:%S')
+            # Check if date is in reasonable range
+            min_date = datetime(1900, 1, 1)
+            max_date = datetime(2100, 12, 31)
+            if min_date <= parsed_date <= max_date:
+                return parsed_date.isoformat()
+            else:
+                logger.debug(f"EXIF datetime out of reasonable range: '{date_time_str}'")
+                return None
+        except ValueError as e:
+            logger.debug(f"Could not parse EXIF datetime '{date_time_str}': {e}")
+            return None
+        except Exception as e:
+            logger.debug(f"Unexpected error parsing EXIF datetime '{date_time_str}': {e}")
+            return None
     
     def close(self):
         """Close the database connection."""
